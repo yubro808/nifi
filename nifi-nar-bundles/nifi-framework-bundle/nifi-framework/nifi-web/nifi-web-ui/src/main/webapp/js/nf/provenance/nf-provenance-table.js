@@ -20,12 +20,12 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         define(['jquery',
-                'Slick',
-                'nf.Common',
-                'nf.Dialog',
-                'nf.ErrorHandler',
-                'nf.Storage',
-                'nf.ng.Bridge'],
+            'Slick',
+            'nf.Common',
+            'nf.Dialog',
+            'nf.ErrorHandler',
+            'nf.Storage',
+            'nf.ng.Bridge'],
             function ($, Slick, nfCommon, nfDialog, nfErrorHandler, nfStorage, nfNgBridge) {
                 return (nf.ng.ProvenanceTable = factory($, Slick, nfCommon, nfDialog, nfErrorHandler, nfStorage, nfNgBridge));
             });
@@ -402,19 +402,19 @@
                         }
                     }
                 },
-                    {
-                        buttonText: 'Cancel',
-                        color: {
-                            base: '#E3E8EB',
-                            hover: '#C7D2D7',
-                            text: '#004849'
-                        },
-                        handler: {
-                            click: function () {
-                                $('#provenance-search-dialog').modal('hide');
-                            }
+                {
+                    buttonText: 'Cancel',
+                    color: {
+                        base: '#E3E8EB',
+                        hover: '#C7D2D7',
+                        text: '#004849'
+                    },
+                    handler: {
+                        click: function () {
+                            $('#provenance-search-dialog').modal('hide');
                         }
-                    }]
+                    }
+                }]
             });
 
             return $.ajax({
@@ -485,8 +485,7 @@
                     searchDetails["value"] = searchValue;
                     var inverse = "inverse";
                     var searchInverse = searchableField.find('div.searchable-checkbox-value').hasClass('checkbox-checked');
-                    if (searchInverse == true)
-                    {
+                    if (searchInverse == true) {
                         searchDetails[inverse] = true;
                     } else {
                         searchDetails[inverse] = false;
@@ -505,6 +504,17 @@
             // define the function for filtering the list
             $('#provenance-filter').keyup(function () {
                 applyFilter();
+            });
+
+            $('#provenance-count-value').change(function () {
+                if(getCountText != undefined || getCountText != ""){
+                    config.maxResults = parseInt(getCountText());
+                    provenanceTableCtrl.loadProvenanceTable();
+                }
+            });
+
+            $('#check-button').click(function () {
+                 $('#provenance-count-value').trigger('change');
             });
 
             // filter options
@@ -802,6 +812,24 @@
             return $('#provenance-filter').val();
         };
 
+         /**
+          * Get the text out of the filter field. If the filter field doesn't
+          * have any text it will contain the text 'filter list' so this method
+          * accounts for that.
+          */
+        var getCountText = function () {
+            var count = $('#provenance-count-value').val();
+
+            if(count == undefined || count == ""){
+                setCountText(1000);
+            }
+            return count;
+        };
+
+        var setCountText = function (val) {
+            return $('#provenance-count-value').val(val);
+        }
+
         /**
          * Performs the provenance filtering.
          *
@@ -893,6 +921,33 @@
         };
 
         /**
+         * Submits a new provenance query for EVERYTHING.
+         *
+         * @argument {object} provenance The provenance query
+         * @returns {deferred}
+         */
+        var submitProvenanceDiffMax = function (provenance, newMax) {
+            var provenanceEntity = {
+                'provenance': {
+                    'request': $.extend({
+                        maxResults: newMax,
+                        summarize: true,
+                        incrementalResults: false
+                    }, provenance)
+                }
+            };
+
+            // submit the provenance request
+            return $.ajax({
+                type: 'POST',
+                url: config.urls.provenance,
+                data: JSON.stringify(provenanceEntity),
+                dataType: 'json',
+                contentType: 'application/json'
+            }).fail(nfErrorHandler.handleAjaxError);
+        };
+
+        /**
          * Gets the results from the provenance query for the specified id.
          *
          * @param {object} provenance
@@ -902,15 +957,15 @@
             var url = provenance.uri;
             if (nfCommon.isDefinedAndNotNull(provenance.request.clusterNodeId)) {
                 url += '?' + $.param({
-                        clusterNodeId: provenance.request.clusterNodeId,
-                        summarize: true,
-                        incrementalResults: false
-                    });
+                    clusterNodeId: provenance.request.clusterNodeId,
+                    summarize: true,
+                    incrementalResults: false
+                });
             } else {
                 url += '?' + $.param({
-                        summarize: true,
-                        incrementalResults: false
-                    });
+                    summarize: true,
+                    incrementalResults: false
+                });
             }
 
             return $.ajax({
@@ -930,8 +985,8 @@
             var url = provenance.uri;
             if (nfCommon.isDefinedAndNotNull(provenance.request.clusterNodeId)) {
                 url += '?' + $.param({
-                        clusterNodeId: provenance.request.clusterNodeId
-                    });
+                    clusterNodeId: provenance.request.clusterNodeId
+                });
             }
 
             return $.ajax({
@@ -1089,6 +1144,98 @@
             },
 
             /**
+             * Returns the provenance results JSON for CSV parsing.
+             * If not query is specified or it is empty, the most recent entries will
+             * be returned.
+             *
+             * @param {object} query
+             * @returns {JSON of Provenance Query}
+             */
+            getProvenanceResults: function (query) {
+                provenance = null;
+
+                // -----------------------------
+                // determine the provenance query
+                // -----------------------------
+
+                // handle the specified query appropriately
+                if (nfCommon.isDefinedAndNotNull(query)) {
+                    // store the last query performed
+                    cachedQuery = query;
+                } else if (!$.isEmptyObject(cachedQuery)) {
+                    // use the last query performed
+                    query = cachedQuery;
+                } else {
+                    // don't use a query
+                    query = {};
+                };
+
+                var strRep = function (data) {
+                    if (typeof data == "string") {
+                        newData = data.replace('/,/g', " ");
+                        return newData;
+                    }
+                    else if (typeof data == "undefined") {
+                        return "-";
+                    }
+                    else if (typeof data == "number") {
+                        return data.toString();
+                    }
+                    else {
+                        return data;
+                    }
+                }
+
+                var convertToCSV = function (results, headerList) {
+                    array = typeof results != 'object' ? JSON.parse(results) : results;
+                    str = '';
+                    row = 'entry,';
+
+
+                    for (index in headerList) {
+                        row += headerList[index] + ',';
+                    }
+                    row = row.slice(0, -1);
+                    str += row + '\r\n';
+                    for (i = 0; i < array.length; i++) {
+                        line = (i + 1) + '';
+                        for (index in headerList) {
+
+                            head = headerList[index];
+
+                            line += ',' + strRep(array[i][head]);
+                        }
+                        str += line + '\r\n';
+                    }
+                    return str;
+                }
+
+                var downloadCSV = function (data) {
+                    arrHeader = ["componentId", "componentName", "componentType", "eventId", "eventTime", "eventType", "fileSize", "fileSizeBytes", "flowFileUuid", "groupId", "id"];
+                    csvData = convertToCSV(data, arrHeader);
+                    blob = new Blob(['\ufeff' + csvData], { type: 'text/csv;charset=utf-8;' });
+                    dwldLink = document.createElement("a");
+                    url = URL.createObjectURL(blob);
+                    isSafariBrowser = navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1;
+                    if (isSafariBrowser) {  //if Safari open in new window to save file with random filename.
+                        dwldLink.setAttribute("target", "_blank");
+                    }
+                    dwldLink.setAttribute("href", url);
+                    dwldLink.setAttribute("download", "provenance.csv");
+                    dwldLink.style.visibility = "hidden";
+                    document.body.appendChild(dwldLink);
+                    dwldLink.click();
+                    document.body.removeChild(dwldLink);
+                }
+
+                submitProvenance(query).done(function (response) {
+                    provenance = response.provenance;
+                    console.log(provenance);
+                    downloadCSV(provenance.results.provenanceEvents);
+
+                });
+            },
+            /**
              * Loads the provenance table with events according to the specified optional
              * query. If not query is specified or it is empty, the most recent entries will
              * be returned.
@@ -1233,8 +1380,8 @@
                 var url;
                 if (nfCommon.isDefinedAndNotNull(clusterNodeId)) {
                     url = config.urls.provenanceEvents + encodeURIComponent(eventId) + '?' + $.param({
-                            clusterNodeId: clusterNodeId
-                        });
+                        clusterNodeId: clusterNodeId
+                    });
                 } else {
                     url = config.urls.provenanceEvents + encodeURIComponent(eventId);
                 }
@@ -1258,14 +1405,14 @@
 
                     // Hide or show dialog tabs as required if base properties are defined
                     var tabs = $('#event-details-tabs').find("li");
-                    $(tabs).each(function(index) {
+                    $(tabs).each(function (index) {
                         if ((event["attributes"] === undefined && index == 1) ||
-                            (event["inputContentAvailable"] === undefined && index ==2)) {
-                                $(this).hide();
-                            } else {
-                                $(this).show();
-                            }
-                        });
+                            (event["inputContentAvailable"] === undefined && index == 2)) {
+                            $(this).hide();
+                        } else {
+                            $(this).show();
+                        }
+                    });
 
                     // ensure the details are selected in case other tabs we're previously selected and have been hidden
                     $(tabs).first().click();
@@ -1305,8 +1452,8 @@
                     var formatEventDetail = function (label, value) {
                         $('<div class="event-detail"></div>').append(
                             $('<div class="detail-name"></div>').text(label)).append(
-                            $('<div class="detail-value">' + nfCommon.formatValue(value) + '</div>').ellipsis()).append(
-                            $('<div class="clear"></div>')).appendTo('#additional-provenance-details');
+                                $('<div class="detail-value">' + nfCommon.formatValue(value) + '</div>').ellipsis()).append(
+                                    $('<div class="clear"></div>')).appendTo('#additional-provenance-details');
                     };
 
                     // conditionally show RECEIVE details

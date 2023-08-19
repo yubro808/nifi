@@ -150,7 +150,7 @@
             }).done(function (response) {
                 var aboutDetails = response.about;
                 var provenanceTitle = aboutDetails.title + ' Data Provenance';
-
+                var provenanceCountMessage = "Max Provenance Events";
                 // store the controller name
                 $('#nifi-controller-uri').text(aboutDetails.uri);
 
@@ -165,6 +165,10 @@
                 // set the document title and the about title
                 document.title = provenanceTitle;
                 $('#provenance-header-text').text(provenanceTitle);
+
+                //set the max provenance count message
+                $('#provenance-count-message').text(provenanceCountMessage);
+
             }).fail(nfErrorHandler.handleAjaxError);
         };
 
@@ -188,6 +192,11 @@
             // define mouse over event for the refresh button
             $('#refresh-button').click(function () {
                 provenanceTableCtrl.loadProvenanceTable();
+            });
+
+            //define download csv button
+            $('#download-button').click(function () {
+                provenanceTableCtrl.getProvenanceResults();
             });
 
             // return a deferred for page initialization
@@ -268,7 +277,7 @@
                             var provenanceSearchValue = {};
                             provenanceSearchValue['value'] = initialComponentId;
                             provenanceSearchValue['inverse'] = false;
-                            
+
                             searchTerms['ProcessorID'] = provenanceSearchValue;
                         }
 
