@@ -47,6 +47,36 @@
     left: 0px;
 }
 
+#provenance-download-container {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+}
+
+#provenance-count {
+    float: right;
+    padding-right: 3px;
+}
+
+#provenance-count-value {
+    background-color: #eaeef0;
+    border: 1px solid #eaeef0;
+    font-family: Roboto,sans-serif;
+    font-size: 13px;
+    padding: 0 10px 0 10px;
+    resize: none;
+    height: 28px;
+    box-sizing: border-box;
+    color: #262626;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#provenance-count-message {
+    font-size: 13px;
+}
+
 #provenance-loading-container {
     float: left;
     width: 16px;
@@ -538,4 +568,10 @@ g.flowfile circle.context, g.event circle.context {
 
 #parent-flowfile-count {
     font-weight: normal;
+}
+
+#provenance-count-value::-webkit-inner-spin-button,
+#provenance-count-value::-webkit-outer-spin-button{
+    -webkit-appearance: none;
+    margin: 0;
 }

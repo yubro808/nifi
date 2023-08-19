@@ -41,6 +41,10 @@
                 <span id="clear-provenance-search" class="link">Clear search</span>
             </div>
             <button id="provenance-search-button" class="fa fa-search"></button>
+            <div id="provenance-count" >
+                 <button id="check-button" class="check-button pointer fa fa-check" title="ChangeMaxProvenance"></button>
+                 <input type="number" value="1000" id="provenance-count-value" class="filter" min="0" step="1">
+            </div>
         </div>
         <div id="provenance-table"></div>
         <div id="provenance-refresh-container">
@@ -49,6 +53,9 @@
                 Last updated:&nbsp;<span id="provenance-last-refreshed" class="value-color"></span>
             </div>
             <div id="provenance-loading-container" class="loading-container"></div>
+        </div>
+        <div id="provenance-download-container">
+            <button id="download-button" class="download-button pointer fa fa-download" title="DownloadCSVProvenance"></button>
         </div>
     </div>
     <div id="provenance-lineage" class="provenance-panel hidden">
