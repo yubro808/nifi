@@ -496,6 +496,99 @@
         };
 
         /**
+         * Initialize the provenance count dialog
+         */
+         var initProvenanceCountDialog = function (provenanceTableCtrl) {
+            //configure max count dialog
+            $('#provenance-count-dialog').modal({
+                scrollableContentStyle: 'scrollable',
+                headerText: 'Max Provenance Events',
+                buttons: [
+                {
+                    buttonText: 'Submit',
+                    color: {
+                        base: '#728E9B',
+                        hover: '#004849',
+                        text: '#ffffff'
+                    },
+                    handler: {
+                        click: function () {
+                            $('#provenance-count-dialog').modal('hide');
+                            if(parseInt(getCountText()) > 10000){
+                                $('#provenance-count-value').trigger('change');
+                            }
+                            else{
+                                config.maxResults = parseInt(getCountText());
+                                //provenanceTableCtrl.loadProvenanceTable();
+                                provenanceTableCtrl.getProvenanceResults();
+                                config.maxResults = 1000;
+                            }
+                        }
+                    }
+                },
+                {
+                    buttonText: 'Cancel',
+                    color: {
+                        base: '#E3E8EB',
+                        hover: '#C7D2D7',
+                        text: '#004849'
+                    },
+                    handler: {
+                        click: function () {
+                            $('#provenance-count-dialog').modal('hide');
+                            setCountText(1000)
+                            //provenanceTableCtrl.loadProvenanceTable();
+                        }
+                        }
+                }]
+            });
+         }
+
+        /**
+         * Initialize the provenance count warning dialog
+         */
+         var initProvenanceCountWarningDialog = function (provenanceTableCtrl) {
+            //configure max count dialog
+            $('#provenance-count-warning-dialog').modal({
+                scrollableContentStyle: 'scrollable',
+                headerText: 'Max Provenance Events',
+                buttons: [
+                {
+                    buttonText: 'Confirm',
+                    color: {
+                        base: '#728E9B',
+                        hover: '#004849',
+                        text: '#ffffff'
+                    },
+                    handler: {
+                        click: function () {
+                            $('#provenance-count-warning-dialog').modal('hide');
+                            $('#provenance-count-dialog').modal('hide');
+                            config.maxResults = parseInt(getCountText());
+                            provenanceTableCtrl.getProvenanceResults();
+                            config.maxResults = 1000;
+                        }
+                    }
+                },
+                {
+                    buttonText: 'Cancel',
+                    color: {
+                        base: '#E3E8EB',
+                        hover: '#C7D2D7',
+                        text: '#004849'
+                    },
+                    handler: {
+                        click: function () {
+                            $('#provenance-count-warning-dialog').modal('hide');
+                            setCountText(1000)
+                            //provenanceTableCtrl.loadProvenanceTable();
+                        }
+                        }
+                }]
+            });
+         }
+
+        /**
          * Initializes the provenance table.
          *
          * @param {boolean} isClustered     Whether or not this instance is clustered
@@ -508,14 +601,26 @@
 
             $('#provenance-count-value').change(function () {
                 if(getCountText != undefined || getCountText != ""){
-                    config.maxResults = parseInt(getCountText());
-                    provenanceTableCtrl.loadProvenanceTable();
+                    console.log("In Change Function: " + parseInt(getCountText()));
+                    if(parseInt(getCountText()) > 1000){
+                        var warning = "The amount of " + parseInt(getCountText()) + " is greater than the recommended provenance size and may cause a slowdown. \n " +
+                        "Are you sure you want to query this amount of events?";
+                        console.log(warning);
+                        $('#provenance-count-warning-message').text(warning)
+                        $('#provenance-count-warning-dialog').modal('show');
+                    }
+                    else{
+                        console.log("No Warning");
+                        config.maxResults = parseInt(getCountText());
+                        provenanceTableCtrl.loadProvenanceTable();
+                    }
                 }
             });
 
-            $('#check-button').click(function () {
-                 $('#provenance-count-value').trigger('change');
-            });
+            /*$('#check-button').click(function () {
+                console.log("Check Button");
+                $('#provenance-count-value').trigger('change');
+            });*/
 
             // filter options
             var filterOptions = [{
@@ -921,7 +1026,7 @@
         };
 
         /**
-         * Submits a new provenance query for EVERYTHING.
+         * Submits a new provenance query with a different maxResults value
          *
          * @argument {object} provenance The provenance query
          * @returns {deferred}
@@ -1108,6 +1213,8 @@
                     // initialize the table view
                     initDetailsDialog();
                     initProvenanceQueryDialog();
+                    initProvenanceCountDialog(provenanceTableCtrl);
+                    initProvenanceCountWarningDialog(provenanceTableCtrl);
                     initProvenanceTable(isClustered, provenanceTableCtrl);
                     initSearchDialog(isClustered, provenanceTableCtrl).done(function () {
                         deferred.resolve();
@@ -1228,11 +1335,10 @@
                     document.body.removeChild(dwldLink);
                 }
 
-                submitProvenance(query).done(function (response) {
+                submitProvenanceDiffMax(query,parseInt(getCountText())).done(function (response) {
                     provenance = response.provenance;
                     console.log(provenance);
                     downloadCSV(provenance.results.provenanceEvents);
-
                 });
             },
             /**

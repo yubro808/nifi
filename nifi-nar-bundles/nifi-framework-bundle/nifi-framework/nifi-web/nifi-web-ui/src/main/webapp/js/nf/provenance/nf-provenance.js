@@ -196,7 +196,8 @@
 
             //define download csv button
             $('#download-button').click(function () {
-                provenanceTableCtrl.getProvenanceResults();
+                $('#provenance-count-dialog').modal('show');
+                //provenanceTableCtrl.getProvenanceResults();
             });
 
             // return a deferred for page initialization

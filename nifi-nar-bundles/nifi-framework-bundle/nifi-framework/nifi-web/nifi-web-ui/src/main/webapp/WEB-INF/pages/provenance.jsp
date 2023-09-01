@@ -75,6 +75,8 @@
         <jsp:include page="/WEB-INF/partials/provenance/provenance-content.jsp"/>
         <jsp:include page="/WEB-INF/partials/provenance/provenance-event-details-dialog.jsp"/>
         <jsp:include page="/WEB-INF/partials/provenance/provenance-search-dialog.jsp"/>
+        <jsp:include page="/WEB-INF/partials/provenance/provenance-count-dialog.jsp"/>
+        <jsp:include page="/WEB-INF/partials/provenance/provenance-count-warning-dialog.jsp"/>
         <jsp:include page="/WEB-INF/partials/provenance/provenance-query-dialog.jsp"/>
         <jsp:include page="/WEB-INF/partials/provenance/lineage-query-dialog.jsp"/>
     </body>

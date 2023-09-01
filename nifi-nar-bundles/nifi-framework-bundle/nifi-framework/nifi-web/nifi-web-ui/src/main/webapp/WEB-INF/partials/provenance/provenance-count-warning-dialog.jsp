@@ -15,14 +15,11 @@
   limitations under the License.
 --%>
 <%@ page contentType="text/html" pageEncoding="UTF-8" session="false" %>
-<div id="provenance-count-dialog" class="hidden small-dialog">
+<div id="provenance-count-warning-dialog" class="hidden small-dialog">
     <div class="dialog-content">
         <div class="setting">
             <div class="setting-field">
-                 <div id="provenance-count" >
-                    <span id="provenance-count-message">Amount of Events</span>
-                    <input type="number" value="1000" id="provenance-count-value" class="filter" min="0" step="1">
-                 </div>
+                <span id="provenance-count-warning-message">&nbsp;</span>
                 </div>
             </div>
         </div>
